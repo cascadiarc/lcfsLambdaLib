@@ -1,2 +1,2 @@
 # lcfsLambdaLib
-This holds out serverless lambda reusable fucntions
+This holds serverless lambda reusable functions
