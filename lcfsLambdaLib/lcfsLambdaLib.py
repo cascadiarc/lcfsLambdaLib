@@ -35,11 +35,11 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
 
     # Send the SQS message
     #sqs_client = boto3.client('sqs')
-    print(type(msg_att))   
+    logger.debug(type(msg_att))   
     sqs_client = boto3.client('sqs')
     sqs_queue_url = sqs_client.get_queue_url(
                     QueueName=sqs_queue_name)['QueueUrl'] 
-    print(sqs_queue_url)
+    logger.debug(sqs_queue_url)
     try:
         msg = sqs_client.send_message(QueueUrl=sqs_queue_url,
                                       MessageAttributes=msg_att,
@@ -48,3 +48,35 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
         logger.error(e) 
         return None
     return msg
+
+def send_sns_message(logger,topic_arn,message,m_struct,m_attr):
+    '''
+    This function publishes an SNS message to the SNS topic
+    :param1: logger=the debugger log handle
+    :param2: topic_arn=
+    :param3: message=
+    :param4: m_struct=
+    :param5: m_attr=
+    :return: repsonse=either the dict of messageId and SequenceNumber
+    '''
+    
+    logger.info(f'Calling {topic_arn} for message')
+    logger.debug(f'Message: {message}')
+    logger.debug(f'MessageStructure: {m_struct}')
+    logger.debug(f'MessageAttributes: {m_attr}')
+    sns_client = boto3.client('sns')
+    try:
+        response = sns_client.publish(
+            TopicArn = topic_arn,
+            Message = message,
+            MessageStructure = m_struct,
+            MessageAttributes = m_attr
+        )
+        logger.info(f'Message sent to {topic_arn}')
+    except Exception as e:
+        logger.info(f'Got Exception {e}')
+        response = f'Exception trying to publish message to {topic_arn}'
+    
+    return response
+
+
