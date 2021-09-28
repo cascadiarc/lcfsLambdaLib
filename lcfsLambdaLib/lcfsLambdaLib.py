@@ -53,14 +53,15 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
         return None
     return msg
 
-def send_sns_message(logger,topic_arn,message,m_struct,m_attr):
+def send_sns_message(logger,topic_arn,subject,message,m_struct,m_attr):
     '''
     This function publishes an SNS message to the SNS topic
     :param1: logger=the debugger log handle
     :param2: topic_arn=
     :param3: message=
-    :param4: m_struct=
-    :param5: m_attr=
+    :param4: subject=
+    :param5: m_struct=
+    :param6: m_attr=
     :return: repsonse=either the dict of messageId and SequenceNumber
     '''
 
@@ -72,6 +73,7 @@ def send_sns_message(logger,topic_arn,message,m_struct,m_attr):
     try:
         response = sns_client.publish(
             TopicArn = topic_arn,
+            Subject= subject,
             Message = message,
             MessageStructure = m_struct,
             MessageAttributes = m_attr
@@ -91,6 +93,7 @@ def read_s3_file(logger,bucket,key,tp):
     :param3: type=thsi is the file type
     :returns: contents=the output of the s3 read command
     '''
+    s3_client = boto3.client('s3')
     # Get s3 object contents based on bucket name and object key; in bytes and convert to string
     try:
         data = s3_client.get_object(Bucket=bucket, Key=key)
