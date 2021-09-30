@@ -85,12 +85,12 @@ def send_sns_message(logger,topic_arn,subject,message,m_struct,m_attr):
     
     return response
 
-def read_s3_file(logger,bucket,key,tp):
+def read_s3_file(logger,bucket,key,encoding):
     '''
     This function takes a bucket and a key and returns the data from the s3 file
     :param1: bucket=the bucket name that the file resides in
     :param2: key=the key to the file, which in s3 is the path and filename in one
-    :param3: type=thsi is the file type
+    :param3: type=this is the file type
     :returns: contents=the output of the s3 read command
     '''
     s3_client = boto3.client('s3')
@@ -99,6 +99,7 @@ def read_s3_file(logger,bucket,key,tp):
         data = s3_client.get_object(Bucket=bucket, Key=key)
     except ClientError as e:
         logger.info(f'Error reading {bucket}/{key}: {e.response["Error"]["Code"]}')
-    contents = data['Body'].read().decode("utf-8")    
+    io.BytesIO(response.get('Body').read())
+    contents = data['Body'].read().decode(encoding)    
 
     return contents
