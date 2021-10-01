@@ -15,13 +15,13 @@ def get_ssm_params(logger,path,enc):
     ssm_client = boto3.client('ssm')
     if isinstance(path, str):
         param1 = ssm_client.get_parameter(Name=path, WithDecryption=enc)
-        a[path] = param1['Parameter']['Value']
+        a[path] = param1['Parameter']['Value'].rstrip()
         logger.debug(f'Sucessfully pulled {a[path]} from {path}')
     else:
         for i in path:
             param1 = ssm_client.get_parameter(Name=i, WithDecryption=enc)
             logger.debug(f'Sucessfully pulled value from {i}')
-            a[i] = param1['Parameter']['Value']
+            a[i] = param1['Parameter']['Value'].rstrip()
     logger.debug(f'SSM parameter(s) done')
 
     frozen_dict = MappingProxyType(a)
