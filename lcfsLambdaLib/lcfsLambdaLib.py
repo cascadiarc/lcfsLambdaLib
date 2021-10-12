@@ -1,4 +1,4 @@
-import boto3, json
+import boto3, json, io
 from types import MappingProxyType
 
 '''This file contains code reused in all our lambdas'''
@@ -98,8 +98,44 @@ def read_s3_file(logger,bucket,key,encoding):
     try:
         data = s3_client.get_object(Bucket=bucket, Key=key)
     except ClientError as e:
-        logger.info(f'Error reading {bucket}/{key}: {e.response["Error"]["Code"]}')
-    io.BytesIO(response.get('Body').read())
+        logger.info(f'Error reading {bucket}/{key}: {e.data["Error"]["Code"]}')
+    io.BytesIO(data.get('Body').read())
     contents = data['Body'].read().decode(encoding)    
 
     return contents
+
+def pns_msg(logger,subject,msg,arn,):
+    '''
+    This function gets called by process_s3. It preps and sends the SNS
+    message
+    :param1: subject=this is the subject of the notification
+    :param2: msg=this is the message in json format
+    :param3: ***msgAtt=this is a kwags array of message attributes
+    :returns: no return
+    '''
+    #set our MessageAttributes so we can filter off the SNS message
+    logger.info(f'Setting up our Message')
+    m = json.dumps(msg)
+    n = ['default', m]
+    msg = json.dumps(n)
+    ms = 'json'
+    ma ={
+            "application" : {
+                "DataType" : "String",
+                "StringValue" : "print-checks"
+            },
+            "error" : {
+                "DataType" : "String",
+                "StringValue" : "Billpay json has unexpected data"
+            }      
+    }
+
+    ms = json.dumps(ms)
+    #resp = lcfsLambdaLib.send_sns_message(logger,tp_arn,msg,ms,ma)
+    #logger.debug(dir(lcfsLambdaLib))
+    tp_arn='arn:aws:sns:us-west-2:386461531385:application_error'
+    resp = send_sns_message(logger,tp_arn,subject,msg,ms,ma)
+    if resp['MessageId']:
+        logger.info(f'{resp["MessageId"]} published to recievers.')
+    else:
+        logger.debug(f'Recieved Error {resp["MessageId"]}')
