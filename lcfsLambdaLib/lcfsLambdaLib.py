@@ -99,7 +99,7 @@ def read_s3_file(logger,bucket,key,encoding):
         data = s3_client.get_object(Bucket=bucket, Key=key)
     except ClientError as e:
         logger.info(f'Error reading {bucket}/{key}: {e.data["Error"]["Code"]}')
-    io.BytesIO(data.get('Body').read())
+    #io.BytesIO(data.get('Body').read())
     contents = data['Body'].read().decode(encoding)    
 
     return contents
