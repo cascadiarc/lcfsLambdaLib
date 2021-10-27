@@ -139,3 +139,64 @@ def pns_msg(logger,subject,msg,arn,):
         logger.info(f'{resp["MessageId"]} published to recievers.')
     else:
         logger.debug(f'Recieved Error {resp["MessageId"]}')
+
+def ssm_params(**kw):
+    '''This function will CRU parameters from SSM
+    :param: type=whether read, create, update
+    :param: kw
+            path=a list or string of the variable path
+            enc=either true or false depending on if encryption is used
+            name,desc,value,type= values necessary for create and update
+    :returns: nothing if an error, otherwise the standard SMS response
+    '''
+    t = kw['t']
+    logger = kw['logger']
+    logger.debug(f'Starting parameter pull for parm type {t}')
+    logger.debug(f'Getting parameter(s) {kw}')
+    a = {}
+    ssm_client = boto3.client('ssm')
+    if t == 'r':
+        path = kw['name']
+        enc = kw['enc']
+        if isinstance(path, str):
+            param1 = ssm_client.get_parameter(Name=path, WithDecryption=enc)
+            a = param1['Parameter']['Value']
+            logger.debug(f'Sucessfully pulled value from {a}')
+            return a
+        else:
+            for i in path:
+                param1 = ssm_client.get_parameter(Name=i, WithDecryption=enc)
+                logger.debug(f'Sucessfully pulled value from {param1}')
+                a[i] = param1['Parameter']['Value']
+                logger.debug(f'Sucessfully pulled value from {a[i]}')
+                return a
+    elif t == 'c':
+        name = kw['name']
+        desc = kw['desc']
+        v = kw['v']
+        pt = kw['parm_type']
+        resp = ssm_client.put_parameter(
+                    Name=name,
+                    Description=desc,
+                    Value=v,
+                    Type=pt,
+                    Tags=[
+                        {
+                            'Key' : 'cost_center',
+                            'Value': 'left coast'
+                        }]
+                )
+        logger.debug(f'SSM parameter(s) done: {resp}')
+        return resp
+    elif t == 'u':
+        name = kw['name']
+        v = kw['v']
+        resp = ssm_client.put_parameter(
+                    Name=name,
+                    Value=v,
+                    Overwrite=True
+                )
+        logger.debug(f'SSM parameter(s) done: {resp}')
+        return resp
+    else:
+        logger.debug(f'Error, no SSM type provided: {type}')
