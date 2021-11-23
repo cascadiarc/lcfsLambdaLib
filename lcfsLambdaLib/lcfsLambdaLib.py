@@ -291,12 +291,13 @@ def get_token(logger,url,apiKey,secret):
         response = http.request('POST',url,
                                 headers=h,
                                 body=encoded_body)
-        item = json.loads(response.data)
-        logger.info(f'This is the item returned: {item}')
-        return item["token"]
     except urllib3.exceptions.HTTPError as e:
         logger.info(f'Http request threw error {e}')
         logger.debug(f'URL called: {url}')
         logger.debug(f'Header passed: {h}')
         return f'ERROR: {e}'
+    
+    item = json.loads(response.data)
+    logger.info(f'This is the item returned: {item}')
+    return item["token"]
 
