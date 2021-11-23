@@ -1,4 +1,5 @@
 import boto3, json, io, dropbox, urllib3
+from urllib3 import HTTPError
 from types import MappingProxyType
 from botocore.exceptions import ClientError
 
@@ -291,7 +292,7 @@ def get_token(logger,url,apiKey,secret):
         response = http.request('POST',url,
                                 headers=h,
                                 body=encoded_body)
-    except urllib3.exceptions.HTTPError as e:
+    except HTTPError as e:
         logger.info(f'Http request threw error {e}')
         logger.debug(f'URL called: {url}')
         logger.debug(f'Header passed: {h}')
