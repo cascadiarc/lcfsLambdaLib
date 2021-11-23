@@ -1,5 +1,5 @@
 import boto3, json, io, dropbox, urllib3
-from urllib3 import HTTPError
+from urllib.error import HTTPError
 from types import MappingProxyType
 from botocore.exceptions import ClientError
 
