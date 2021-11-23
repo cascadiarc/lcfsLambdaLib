@@ -1,4 +1,4 @@
-import boto3, json, io, dropbox
+import boto3, json, io, dropbox, urllib3
 from types import MappingProxyType
 from botocore.exceptions import ClientError
 
@@ -210,38 +210,24 @@ def dau_create_folder(logger,dbx_as_user,folder_path,folder_name):
     :param: folder_name=the name of the folder to create
     :returns: the path to the new folder
     '''
-    fn = f'{folder_path}{folder_name}'
-    logger.info(f'Creating new folder {folder_name} in {folder_path}')
-    a = dbx_as_user.files_create_folder_v2(fn)
-    logger.info(f'Folder created {a.path_display}')
-    return a.path_display
-
-def dau_create_folder(logger,dbx_as_user,folder_path,folder_name):
-    '''This function calls dropbox to create a folder
-    :param: logger=the logging handle
-    :param: dbx_as_user=the dropbox session
-    :param: fodler_path=the path the folder will be created in
-    :param: folder_name=the name of the folder to create
-    :returns: the path to the new folder
-    '''
     logger.info(f'Got a dropbox folder create request')
     fn = f'{folder_path}{folder_name}'
     logger.info(f'Creating new folder {folder_name} in {folder_path}')
     a = dbx_as_user.files_create_folder_v2(fn)
-    logger.info(f'FDolder creation complete')
+    logger.info(f'Folder creation complete')
     logger.debug(f'Folder created {a.path_display}')
     return a.path_display
 
 def dau_copy_to(logger,bn,bk,dbx_as_user,dbx_path):
     '''This function takes s3 file and copies it to dropbox
-    :param: logger=
+    :param: logger=our logging handle
     :param: bn=s3 bucket name to read from
     :param: bk=s3 bucket key to read from
     :param: dbx_as_user=the dropbox session
     :param: dbx_path=the path that the file will be copied to and filename
     :returns: the path and fielname in dropbox
     '''
-    logger.info(f'Got a request to copy files form s3 to dropbox')
+    logger.info(f'Got a request to copy files from s3 to dropbox')
     s3_client = boto3.client('s3')
     try:
         data = s3_client.get_object(Bucket=bn, Key=bk)
@@ -272,7 +258,7 @@ def dau_to_s3(logger,dbx_as_user,dbx_path,dbx_filename,bk,bn):
     '''
     logger.info(f'Got a request to copy files from dropbox to s3')
     s3_client = boto3.client('s3')
-    s3_resource = boto3.resource('s3')
+    #s3_resource = boto3.resource('s3')
     DBX_PATH = f'{dbx_path}{dbx_filename}'
     #grab our file from the dropbox side
     try:
@@ -283,15 +269,33 @@ def dau_to_s3(logger,dbx_as_user,dbx_path,dbx_filename,bk,bn):
         return
     logger.info(f'sucessfully downloaded {meta.name}')
 
-    #upload to s3
-    #getting a bucket resource
-    try:
-        bucket = s3_resource.Bucket(bn)
-    except ClientError as e:
-        bucket = None
-        return
-
     #getting a bucket object
     s3_client.upload_fileobj(io.BytesIO(res.content), bn, bk)
     logger.info(f'sucessfully read in s3://{bn}{bk}')
     return bk
+
+def get_token(logger,url,apiKey,secret):
+    '''
+    This function calls the Left Coast encryption service to ether return the token
+    for the given hash value, or create a new token from the plaintext value and return
+    that
+    :param:     url=this is the encryption service URL
+    :param:     json=this is the plaintext parameter of the secret in json format
+    :returns:   a token that represents the secret
+    '''
+    logger.info(f'Calling our encryption service to get a token')
+    encoded_body = json.dumps({"plaintext_item": secret})
+    try:
+        http = urllib3.PoolManager()
+        h={'x-api-key':apiKey}
+        response = http.request('POST',url,
+                                headers=h,
+                                body=encoded_body)
+        item = json.loads(response.data)
+        return item["token"]
+    except urllib3.exceptions.HTTPError as e:
+        logger.info(f'Http request threw error {e}')
+        logger.debug(f'URL called: {url}')
+        logger.debug(f'Header passed: {h}')
+        return f'ERROR: {e}'
+
