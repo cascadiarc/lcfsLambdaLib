@@ -4,7 +4,7 @@ setup(
     name='lcfsLambdaLib',
     author='Dan Herrington',
     author_email='dan@cascadiarc.com',
-    version='0.3',
+    version='0.5',
     packages=[
         'lcfsLambdaLib',
     ],
