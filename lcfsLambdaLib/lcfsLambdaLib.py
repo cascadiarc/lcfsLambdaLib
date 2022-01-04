@@ -1,4 +1,4 @@
-import boto3, json, io, dropbox, urllib3
+import boto3, json, io, dropbox, urllib3,logging
 from urllib.error import HTTPError
 from types import MappingProxyType
 from botocore.exceptions import ClientError
@@ -59,11 +59,11 @@ def send_sns_message(logger,topic_arn,subject,message,m_struct,m_attr):
     '''
     This function publishes an SNS message to the SNS topic
     :param1: logger=the debugger log handle
-    :param2: topic_arn=
-    :param3: message=
-    :param4: subject=
-    :param5: m_struct=
-    :param6: m_attr=
+    :param2: topic_arn=this is the aws arn of the topic
+    :param3: message=this is string of the message to be sent 
+    :param4: subject=this is the subject line
+    :param5: m_struct=this is the message format typically json
+    :param6: m_attr=this is a dict of message attributes
     :return: repsonse=either the dict of messageId and SequenceNumber
     '''
 
@@ -76,14 +76,14 @@ def send_sns_message(logger,topic_arn,subject,message,m_struct,m_attr):
         response = sns_client.publish(
             TopicArn = topic_arn,
             Subject= subject,
-            Message = message,
+            Message = json.dumps({'default': json.dumps(message)}),
             MessageStructure = m_struct,
             MessageAttributes = m_attr
         )
-        logger.info(f'Message sent to {topic_arn}')
+        logger.info(f'Message sucessfully sent to {topic_arn}')
     except Exception as e:
-        logger.info(f'Got Exception {e}')
-        response = f'Exception trying to publish message to {topic_arn}'
+        logger.debug(f'Got Exception {e}')
+        response = f'Check Logs. Exception trying to publish message to {topic_arn}'
     
     return response
 
@@ -106,7 +106,7 @@ def read_s3_file(logger,bucket,key,encoding):
 
     return contents
 
-def pns_msg(logger,subject,msg,arn,):
+def pns_msg(logger,subject,msg):
     '''
     This function gets called by process_s3. It preps and sends the SNS
     message
@@ -277,7 +277,7 @@ def dau_to_s3(logger,dbx_as_user,dbx_path,dbx_filename,bk,bn):
 
 def get_token(logger,url,apiKey,secret):
     '''
-    This function calls the Left Coast encryption service to ether return the token
+    This function calls the Left Coast encryption service to either return the token
     for the given hash value, or create a new token from the plaintext value and return
     that
     :param:     url=this is the encryption service URL
@@ -301,4 +301,57 @@ def get_token(logger,url,apiKey,secret):
     item = json.loads(response.data)
     logger.info(f'This is the item returned: {item}')
     return item["token"]
+
+def get_tv(logger,url,apiKey,hash):
+    '''
+    This function calls the Left Coast decryption service to get the plaintext value from a hash
+    :param:     url=this is the encryption service URL
+    :param:     apiKey=this is the apiKey used to access the API gateway endpoint
+    :param:     hash=this is hte hash of the vault entry
+    :returns:   the plaintext value
+    '''
+    logger.info(f'Calling our encryption service to get a token')
+    unencoded_body = json.dumps({"hash": hash})
+    try:
+        http = urllib3.PoolManager()
+        h={'x-api-key':apiKey}
+        response = http.request('POST',url,
+                                headers=h,
+                                body=unencoded_body)
+    except HTTPError as e:
+        logger.info(f'Http request threw error {e}')
+        logger.debug(f'URL called: {url}')
+        logger.debug(f'Header passed: {h}')
+        return f'ERROR: {e}'
+    
+    item = json.loads(response.data)
+    logger.info(f'This is the item returned: {item}')
+    return item["plaintext_value"]
+
+def get_hash(logger,url,apiKey,token):
+    '''
+    This function calls the Left Coast encryption service to get the hash value for
+    a provided token
+    :param:     url=this is the encryption service URL
+    :param:     apiKey=this is the apiKey used to access the API gateway endpoint
+    :param:     token=this is the token used to get the hash value
+    :returns:   a hash value that is the key in the vault for the plaintext value
+    '''
+    logger.info(f'Calling our encryption service to get a hash')
+    t = json.dumps({"token": token})
+    try:
+        http = urllib3.PoolManager()
+        h={'x-api-key':apiKey}
+        response = http.request('POST',url,
+                                headers=h,
+                                body=t)
+    except HTTPError as e:
+        logger.info(f'Http request threw error {e}')
+        logger.debug(f'URL called: {url}')
+        logger.debug(f'Header passed: {h}')
+        return f'ERROR: {e}'
+    
+    item = json.loads(response.data)
+    logger.info(f'This is the item returned: {item}')
+    return item["hash"]
 
