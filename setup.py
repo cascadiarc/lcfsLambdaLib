@@ -1,10 +1,13 @@
-from distutils.core import setup
+import setuptools
 
-setup(
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
     name='lcfsLambdaLib',
     author='Dan Herrington',
     author_email='dan@cascadiarc.com',
-    version='0.7',
+    version='0.0.8',
     packages=[
         'lcfsLambdaLib',
     ],

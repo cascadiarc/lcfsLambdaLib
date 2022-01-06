@@ -21,6 +21,7 @@ def get_ssm_params(logger,path,enc):
         logger.debug(f'Sucessfully pulled {a[path]} from {path}')
     else:
         for i in path:
+            logger.debug(f'Lookup: {i}')
             param1 = ssm_client.get_parameter(Name=i, WithDecryption=enc)
             logger.debug(f'Sucessfully pulled value from {i}')
             a[i] = param1['Parameter']['Value'].rstrip()
@@ -72,11 +73,14 @@ def send_sns_message(logger,topic_arn,subject,message,m_struct,m_attr):
     logger.debug(f'MessageStructure: {m_struct}')
     logger.debug(f'MessageAttributes: {m_attr}')
     sns_client = boto3.client('sns')
+    if m_struct = 'json':
+        message = json.dumps({'default': json.dumps(message)})
+
     try:
         response = sns_client.publish(
             TopicArn = topic_arn,
             Subject= subject,
-            Message = json.dumps({'default': json.dumps(message)}),
+            Message = message,
             MessageStructure = m_struct,
             MessageAttributes = m_attr
         )
