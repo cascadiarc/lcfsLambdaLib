@@ -73,7 +73,7 @@ def send_sns_message(logger,topic_arn,subject,message,m_struct,m_attr):
     logger.debug(f'MessageStructure: {m_struct}')
     logger.debug(f'MessageAttributes: {m_attr}')
     sns_client = boto3.client('sns')
-    if m_struct = 'json':
+    if m_struct == 'json':
         message = json.dumps({'default': json.dumps(message)})
 
     try:
