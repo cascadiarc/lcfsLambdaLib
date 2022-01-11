@@ -3,6 +3,9 @@ from urllib.error import HTTPError
 from types import MappingProxyType
 from botocore.exceptions import ClientError
 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 '''This file contains code reused in all our lambdas'''
 
 def get_ssm_params(logger,path,enc):
@@ -51,7 +54,7 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
         msg = sqs_client.send_message(QueueUrl=sqs_queue_url,
                                       MessageAttributes=msg_att,
                                       MessageBody=json.dumps(msg_body))
-    except boto3.botocore.ClientError as e:
+    except ClientError as e:
         logger.error(e) 
         return None
     return msg
@@ -78,7 +81,7 @@ def send_sqs_fifo_message(logger,sqs_queue_name, msg_att, msg_body,gid):
                                       MessageAttributes=msg_att,
                                       MessageBody=json.dumps(msg_body),
                                       MessageGroupId=gid)
-    except boto3.botocore.ClientError as e:
+    except ClientError as e:
         logger.error(e) 
         return None
     return msg
