@@ -7,7 +7,7 @@ setuptools.setup(
     name='lcfsLambdaLib',
     author='Dan Herrington',
     author_email='dan@cascadiarc.com',
-    version='0.0.9',
+    version='0.0.10',
     packages=[
         'lcfsLambdaLib',
     ],

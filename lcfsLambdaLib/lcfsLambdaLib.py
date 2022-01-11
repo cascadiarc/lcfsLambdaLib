@@ -55,6 +55,7 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
                                       MessageAttributes=msg_att,
                                       MessageBody=json.dumps(msg_body))
     except ClientError as e:
+        logger.debug(f'Gor error: {e}')
         logger.error(e) 
         return None
     return msg
