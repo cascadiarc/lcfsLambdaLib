@@ -395,7 +395,7 @@ def get_hash(logger,url,apiKey,token):
     return item["hash"]
 
 def create_multipart_message(
-        sender: str, recipients: list, title: str, text: str=None, html: str=None, attachments: list=None)\
+        sender: str, recipients: list, title: str, cc: list=None, text: str=None, html: str=None, bcc: list=None, attachments: list=None)\
         -> MIMEMultipart:
     """
     Creates a MIME multipart message object.
@@ -411,26 +411,14 @@ def create_multipart_message(
     :return: A `MIMEMultipart` to be used to send the email.
     """
     logger.info(f'Creating multipart MIME message')
-    html = html.strip('"')
-    l_t = html.split(',')
-    l = len(l_t)
-    logger.info(f'length: {l}')
-    logger.info(f'text: {l_t}')
-    i = 0
-    a = ''
-    while i < (l):
-        a = f'{a}{l_t[i]}<br>'
-        i += 1
-    logger.info(f'Our string: {a}')
-    #sys.exit()
     multipart_content_subtype = 'alternative' #if text and html else 'mixed'
     msg = MIMEMultipart(multipart_content_subtype)
     msg['Subject'] = title
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
+    msg['CC'] = ', '.join(cc)
+    msg['CC'] = ', '.join(bcc)
 
-    logger.info(f'Our html: {html}')
-    #sys.exit()
     # Record the MIME types of both parts - text/plain and text/html.
     # According to RFC 2046, the last part of a multipart message, in this case the HTML message, is best and preferred.
     if text:
@@ -450,12 +438,12 @@ def create_multipart_message(
     return msg
 
 def send_mail(
-        sender: str, recipients: list, title: str, text: str=None, html: str=None, attachments: list=None) -> dict:
+        sender: str, recipients: list, title: str, cc: list=None, text: str=None, html: str=None, bcc: list=None, attachments: list=None) -> dict:
     """
     Send email to recipients. Sends one mail to all recipients.
     The sender needs to be a verified email in SES.
     """
-    msg = create_multipart_message(sender, recipients, title, text, html, attachments)
+    msg = create_multipart_message(sender, recipients, cc, bcc, title, text, html, attachments)
     ses_client = boto3.client('ses')  # Use your settings here
     return ses_client.send_raw_email(
         Source=sender,
