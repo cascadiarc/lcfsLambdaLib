@@ -1,4 +1,4 @@
-import boto3, json, io, dropbox, urllib3,logging
+import boto3, json, io, dropbox, urllib3,logging,os
 from urllib.error import HTTPError
 from types import MappingProxyType
 from botocore.exceptions import ClientError
@@ -461,3 +461,4 @@ def send_mail(
         Source=sender,
         Destinations=recipients,
         RawMessage={'Data': msg.as_string()}
+    )
