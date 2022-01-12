@@ -5,7 +5,6 @@ from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from tabulate import tabulate
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
