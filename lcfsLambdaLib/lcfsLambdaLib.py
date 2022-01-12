@@ -418,7 +418,8 @@ def create_multipart_message(
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
     msg['CC'] = ', '.join(cc)
-    msg['BCC'] = ', '.join(bcc)
+    if bcc:
+        msg['BCC'] = ', '.join(bcc)
 
     # Record the MIME types of both parts - text/plain and text/html.
     # According to RFC 2046, the last part of a multipart message, in this case the HTML message, is best and preferred.
