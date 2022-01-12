@@ -2,6 +2,10 @@ import boto3, json, io, dropbox, urllib3,logging
 from urllib.error import HTTPError
 from types import MappingProxyType
 from botocore.exceptions import ClientError
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from tabulate import tabulate
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -33,7 +37,7 @@ def get_ssm_params(logger,path,enc):
     frozen_dict = MappingProxyType(a)
     return frozen_dict
 
-def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body,gid):
+def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
     """
     This function creates our SQS message
     :param sqs_queue_name: Name of existing SQS URL
@@ -390,3 +394,70 @@ def get_hash(logger,url,apiKey,token):
     logger.info(f'This is the item returned: {item}')
     return item["hash"]
 
+def create_multipart_message(
+        sender: str, recipients: list, title: str, text: str=None, html: str=None, attachments: list=None)\
+        -> MIMEMultipart:
+    """
+    Creates a MIME multipart message object.
+    Uses only the Python `email` standard library.
+    Emails, both sender and recipients, can be just the email string or have the format 'The Name <the_email@host.com>'.
+
+    :param sender: The sender.
+    :param recipients: List of recipients. Needs to be a list, even if only one recipient.
+    :param title: The title of the email.
+    :param text: The text version of the email body (optional).
+    :param html: The html version of the email body (optional).
+    :param attachments: List of files to attach in the email.
+    :return: A `MIMEMultipart` to be used to send the email.
+    """
+    logger.info(f'Creating multipart MIME message')
+    html = html.strip('"')
+    l_t = html.split(',')
+    l = len(l_t)
+    logger.info(f'length: {l}')
+    logger.info(f'text: {l_t}')
+    i = 0
+    a = ''
+    while i < (l):
+        a = f'{a}{l_t[i]}<br>'
+        i += 1
+    logger.info(f'Our string: {a}')
+    #sys.exit()
+    multipart_content_subtype = 'alternative' #if text and html else 'mixed'
+    msg = MIMEMultipart(multipart_content_subtype)
+    msg['Subject'] = title
+    msg['From'] = sender
+    msg['To'] = ', '.join(recipients)
+
+    logger.info(f'Our html: {html}')
+    #sys.exit()
+    # Record the MIME types of both parts - text/plain and text/html.
+    # According to RFC 2046, the last part of a multipart message, in this case the HTML message, is best and preferred.
+    if text:
+        part = MIMEText(text, 'plain')
+        msg.attach(part)
+    if html:
+        part = MIMEText(html, 'html')
+        msg.attach(part)
+
+    # Add attachments
+    for attachment in attachments or []:
+        with open(attachment, 'rb') as f:
+            part = MIMEApplication(f.read())
+            part.add_header('Content-Disposition', 'attachment', filename=os.path.basename(attachment))
+            msg.attach(part)
+
+    return msg
+
+def send_mail(
+        sender: str, recipients: list, title: str, text: str=None, html: str=None, attachments: list=None) -> dict:
+    """
+    Send email to recipients. Sends one mail to all recipients.
+    The sender needs to be a verified email in SES.
+    """
+    msg = create_multipart_message(sender, recipients, title, text, html, attachments)
+    ses_client = boto3.client('ses')  # Use your settings here
+    return ses_client.send_raw_email(
+        Source=sender,
+        Destinations=recipients,
+        RawMessage={'Data': msg.as_string()}
