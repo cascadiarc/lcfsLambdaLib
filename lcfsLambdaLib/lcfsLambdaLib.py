@@ -411,13 +411,14 @@ def create_multipart_message(
     :return: A `MIMEMultipart` to be used to send the email.
     """
     logger.info(f'Creating multipart MIME message')
+    logger.debug(f'cc list: {type(cc)}')
     multipart_content_subtype = 'alternative' #if text and html else 'mixed'
     msg = MIMEMultipart(multipart_content_subtype)
     msg['Subject'] = title
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
     msg['CC'] = ', '.join(cc)
-    msg['CC'] = ', '.join(bcc)
+    msg['BCC'] = ', '.join(bcc)
 
     # Record the MIME types of both parts - text/plain and text/html.
     # According to RFC 2046, the last part of a multipart message, in this case the HTML message, is best and preferred.
@@ -443,7 +444,7 @@ def send_mail(
     Send email to recipients. Sends one mail to all recipients.
     The sender needs to be a verified email in SES.
     """
-    msg = create_multipart_message(sender, recipients, cc, bcc, title, text, html, attachments)
+    msg = create_multipart_message(sender, recipients, title, cc, text, html, bcc, attachments)
     ses_client = boto3.client('ses')  # Use your settings here
     return ses_client.send_raw_email(
         Source=sender,
