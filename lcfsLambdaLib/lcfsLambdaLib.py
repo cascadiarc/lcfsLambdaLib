@@ -33,7 +33,7 @@ def get_ssm_params(logger,path,enc):
     frozen_dict = MappingProxyType(a)
     return frozen_dict
 
-def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
+def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body,gid):
     """
     This function creates our SQS message
     :param sqs_queue_name: Name of existing SQS URL
@@ -53,7 +53,7 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
     try:
         msg = sqs_client.send_message(QueueUrl=sqs_queue_url,
                                       MessageAttributes=msg_att,
-                                      MessageBody=json.dumps(msg_body))
+                                      MessageBody=msg_body)
     except ClientError as e:
         logger.debug(f'Gor error: {e}')
         logger.error(e) 
