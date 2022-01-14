@@ -446,6 +446,14 @@ def send_mail(
     """
     msg = create_multipart_message(sender, recipients, title, cc, text, html, bcc, attachments)
     ses_client = boto3.client('ses')  # Use your settings here
+    logger.debug(f'[LCFSLAMBDALIB] recipients: {recipients}')
+    if cc:
+        recipients = f'{recipients},{cc}'
+        logger.debug(f'[LCFSLAMBDALIB] cc: {cc}')
+    if bcc:
+        logger.debug(f'[LCFSLAMBDALIB] cc: {bcc}')
+        recipients = f'{recipients},{bcc}'
+    logger.debug(f'[LCFSLAMBDALIB] recipients: {recipients}')
     return ses_client.send_raw_email(
         Source=sender,
         Destinations=recipients,
