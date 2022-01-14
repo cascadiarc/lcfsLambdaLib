@@ -448,11 +448,11 @@ def send_mail(
     ses_client = boto3.client('ses')  # Use your settings here
     logger.debug(f'[LCFSLAMBDALIB] recipients: {recipients}')
     if cc:
-        recipients = f'{recipients},{cc}'
+        recipients = recipients + cc
         logger.debug(f'[LCFSLAMBDALIB] cc: {cc}')
     if bcc:
         logger.debug(f'[LCFSLAMBDALIB] cc: {bcc}')
-        recipients = f'{recipients},{bcc}'
+        recipients = recipients = recipients + bcc
     logger.debug(f'[LCFSLAMBDALIB] recipients: {recipients}')
     return ses_client.send_raw_email(
         Source=sender,
