@@ -5,6 +5,8 @@ from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from boto3.dynamodb.conditions import Key, Attr
+from datetime import datetime, timedelta
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -459,3 +461,40 @@ def send_mail(
         Destinations=recipients,
         RawMessage={'Data': msg.as_string()}
     )
+
+def check_duplicates(item,table_n):
+    '''This function checks the transaction table to verify if there is a possible duplicate transaction and
+    notifes operations
+    :param:     item=the full transaction data from quid
+    :param:     table_n=the name of the database table
+    :return:    False or list of dicts of possible duplicate transactions
+    '''
+    db = boto3.resource('dynamodb')
+    table = db.Table(table_n)
+    filter_exp = Attr('status').eq('PENDING') & Attr('payee_invoice').eq(item['payee_invoice']) 
+    logger.debug(f'Filter Expression: {filter_exp}')
+    results = table.scan(FilterExpression=filter_exp)
+    logger.debug(f'Results for duplicate check: {results}')
+    r = results.get('Items')
+    l_dup = []
+    if r:
+        for trans in r:
+            if trans['amount'] == item['amount'] and trans['payee_name'] == item['payee_name']:
+                #we probably have a duplicate transaction
+                d_dup = {
+                    'transaction_num1' : trans['transaction'],
+                    'payee_name1' : trans['payee_name'],
+                    'amount1' : trans['amount'],
+                    'vendor_name1' : trans['name_on_account'],
+                    'date1' : datetime.fromtimestamp(trans['timestamp'].strftime('%m-%d%-%Y')),
+                    'transaction_num2' : item['transaction'],
+                    'payee_name2' : item['payee_name'],
+                    'vendor_name2' : item['name_on_account'],
+                    'amount1' : item['amount'],
+                    'date' : datetime.fromtimestamp(item['timestamp'].strftime('%m-%d%-%Y')),                    
+                }
+                l_dup.append(d_dup)
+                return l_dup
+            else:
+                return None
+    return None
