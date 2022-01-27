@@ -50,22 +50,22 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
 
     # Send the SQS message
     #sqs_client = boto3.client('sqs')
-    logger.debug(type(msg_att))   
+    logger.debug(f'In send_sqs_message')   
     sqs_client = boto3.client('sqs')
     sqs_queue_url = sqs_client.get_queue_url(
                     QueueName=sqs_queue_name)['QueueUrl'] 
-    logger.debug(sqs_queue_url)
+    logger.debug(f'Our SQS url: {sqs_queue_url}')
     try:
         msg = sqs_client.send_message(QueueUrl=sqs_queue_url,
                                       MessageAttributes=msg_att,
                                       MessageBody=msg_body)
     except ClientError as e:
-        logger.debug(f'Gor error: {e}')
+        logger.debug(f'Got error: {e}')
         logger.error(e) 
         return None
     return msg
 
-def send_sqs_fifo_message(logger,sqs_queue_name, msg_att, msg_body,gid):
+def send_sqs_fifo_message(logger,sqs_queue_name, msg_att,msg_body,gid):
     """
     This function creates our SQS message
     :param sqs_queue_name: Name of existing SQS URL
