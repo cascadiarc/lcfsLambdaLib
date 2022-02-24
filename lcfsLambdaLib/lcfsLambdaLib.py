@@ -191,7 +191,7 @@ def ssm_params(**kw):
             name,desc,value,type= values necessary for create and update
     :returns: nothing if an error, otherwise the standard SMS response
     '''
-    t = kw['t']
+    t = kw['type']
     logger = kw['logger']
     logger.debug(f'Starting parameter pull for parm type {t}')
     logger.debug(f'Getting parameter(s) {kw}')
@@ -232,7 +232,7 @@ def ssm_params(**kw):
         return resp
     elif t == 'u':
         name = kw['name']
-        v = kw['v']
+        v = kw['value']
         resp = ssm_client.put_parameter(
                     Name=name,
                     Value=v,
@@ -242,6 +242,7 @@ def ssm_params(**kw):
         return resp
     else:
         logger.debug(f'Error, no SSM type provided: {type}')
+        return False
 
 def dau_create_folder(logger,dbx_as_user,folder_path,folder_name):
     '''This function calls dropbox to create a folder
@@ -453,7 +454,7 @@ def send_mail(
         recipients = recipients + cc
         logger.debug(f'[LCFSLAMBDALIB] cc: {cc}')
     if bcc:
-        logger.debug(f'[LCFSLAMBDALIB] cc: {bcc}')
+        logger.debug(f'[LCFSLAMBDALIB] bcc: {bcc}')
         recipients = recipients = recipients + bcc
     logger.debug(f'[LCFSLAMBDALIB] recipients: {recipients}')
     return ses_client.send_raw_email(
@@ -463,6 +464,7 @@ def send_mail(
     )
 
 def check_duplicates(item,table_n):
+    ###Not working
     '''This function checks the transaction table to verify if there is a possible duplicate transaction and
     notifes operations
     :param:     item=the full transaction data from quid
