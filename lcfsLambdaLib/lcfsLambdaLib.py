@@ -313,7 +313,7 @@ def dau_to_s3(logger,dbx_as_user,dbx_path,dbx_filename,bk,bn):
 
     #getting a bucket object
     s3_client.upload_fileobj(io.BytesIO(res.content), bn, bk)
-    logger.info(f'sucessfully read in s3://{bn}{bk}')
+    logger.info(f'sucessfully read in s3://{bn}/{bk}')
     return bk
 
 def get_token(logger,url,apiKey,secret):
