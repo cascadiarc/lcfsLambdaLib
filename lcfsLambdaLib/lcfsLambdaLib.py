@@ -5,8 +5,10 @@ from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key, Attr, And
 from datetime import datetime, timedelta
+import functools
+from functools import reduce
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -473,7 +475,7 @@ def check_duplicates(item,table_n):
     '''
     db = boto3.resource('dynamodb')
     table = db.Table(table_n)
-    filter_exp = Attr('status').eq('PENDING') & Attr('payee_invoice').eq(item['payee_invoice']) 
+    filter_exp = Attr('status').eq('PENDING') & Attr('payee_invoice').eq(item['payee_invoice']) & Attr('name').eq(item['name'])
     logger.debug(f'Filter Expression: {filter_exp}')
     results = table.scan(FilterExpression=filter_exp)
     logger.debug(f'Results for duplicate check: {results}')
@@ -481,7 +483,7 @@ def check_duplicates(item,table_n):
     l_dup = []
     if r:
         for trans in r:
-            if trans['amount'] == item['amount'] and trans['payee_name'] == item['payee_name']:
+            if trans['amount'] == item['amount']:
                 #we probably have a duplicate transaction
                 d_dup = {
                     'transaction_num1' : trans['transaction'],
@@ -500,3 +502,17 @@ def check_duplicates(item,table_n):
             else:
                 return None
     return None
+
+def get_ddb_res(table_name,query):
+    '''This function takes in a table name and a dict of key value parms
+    to scan ddb and get results
+    :param:     table_name=the name of the DDB table
+    :param:     query=This is a dict of ddb key and ddb value to scan for
+    returns     Returns the result set
+    '''
+    db = boto3.resource('dynamodb')
+    table = db.Table(table_name)
+    logger.info(f'Pulling data from table: {table_name}')
+    results = table.scan(FilterExpression=reduce(And, ([Key(k).eq(v) for k, v in query.items()])))
+    logger.debug(f'Got results: {results["Items"]}')
+    return results['Items']
