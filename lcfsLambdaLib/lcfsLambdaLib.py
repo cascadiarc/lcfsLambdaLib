@@ -59,6 +59,8 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
     sqs_queue_url = sqs_client.get_queue_url(
                     QueueName=sqs_queue_name)['QueueUrl'] 
     logger.debug(f'Our SQS url: {sqs_queue_url}')
+    logger.debug(f'Our msgAttributes: {msg_att}')
+    logger.debug(f'Our Body: {msg_body}')
     try:
         msg = sqs_client.send_message(QueueUrl=sqs_queue_url,
                                       MessageAttributes=msg_att,
