@@ -54,7 +54,7 @@ def send_sqs_message(logger,sqs_queue_name, msg_att, msg_body):
     # Send the SQS message
     #sqs_client = boto3.client('sqs')
     logger.debug(f'In send_sqs_message')
-    sys.exit()  
+ 
     sqs_client = boto3.client('sqs')
     sqs_queue_url = sqs_client.get_queue_url(
                     QueueName=sqs_queue_name)['QueueUrl'] 
