@@ -491,12 +491,12 @@ def check_duplicates(item,table_n):
                 #we probably have a duplicate transaction
                 d_dup = {
                     'transaction_num1' : trans['transaction'],
-                    'payee_name1' : trans['payee_name'],
+                    'payer_name1' : trans['payer_name'],
                     'amount1' : trans['amount'],
                     'vendor_name1' : trans['name_on_account'],
                     'date1' : datetime.fromtimestamp(trans['timestamp'].strftime('%m-%d%-%Y')),
                     'transaction_num2' : item['transaction'],
-                    'payee_name2' : item['payee_name'],
+                    'payer_name2' : item['payer_name'],
                     'vendor_name2' : item['name_on_account'],
                     'amount1' : item['amount'],
                     'date' : datetime.fromtimestamp(item['timestamp'].strftime('%m-%d%-%Y')),                    
