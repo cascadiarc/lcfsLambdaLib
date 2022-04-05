@@ -489,13 +489,14 @@ def check_duplicates(item,table_n):
         for trans in r:
             if trans['amount'] == item['amount']:
                 #we probably have a duplicate transaction
+                logger.debug(f'Pulled from DDB: {trans}')
+                logger.debug(f'New to be inserted: {item}')
                 d_dup = {
                     'transaction_num1' : trans['transaction'],
                     'payer_name1' : trans['payer_name'],
                     'amount1' : trans['amount'],
                     'vendor_name1' : trans['name_on_account'],
                     'date1' : trans['timestamp'],
-                    'transaction_num2' : item['transaction'],
                     'payer_name2' : item['payer_name'],
                     'vendor_name2' : item['name_on_account'],
                     'amount1' : item['amount'],
